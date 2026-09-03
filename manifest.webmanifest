@@ -1,0 +1,9 @@
+{
+  "name":"Aufmaß Stahlbau",
+  "short_name":"Aufmaß",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#f5f5f7",
+  "theme_color":"#ffffff",
+  "icons":[]
+}
