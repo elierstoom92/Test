@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <title>Aufmaß Stahlbau</title>
+  <style>
+    :root{--bg:#f5f5f7;--card:#fff;--txt:#111;--muted:#6e6e73;--line:#dedee3;--blue:#0a84ff;--green:#2e9f53;--orange:#f59e0b;--red:#d33;}
+    *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt)}
+    header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 16px calc(10px + env(safe-area-inset-top));}
+    header h1{font-size:21px;margin:0} header small{color:var(--muted)}
+    main{max-width:760px;margin:0 auto;padding:14px 14px 100px}
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}.tab{border:0;background:#e8e8ed;padding:10px 6px;border-radius:12px;font-weight:600}.tab.active{background:#111;color:#fff}
+    .view{display:none}.view.active{display:block}.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .row{display:flex;gap:10px;align-items:center}.between{justify-content:space-between}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    label{display:block;font-size:12px;color:var(--muted);margin:2px 0 5px} input,select,textarea{width:100%;font:inherit;border:1px solid var(--line);border-radius:12px;background:#fff;padding:11px 12px} textarea{min-height:84px;resize:vertical}
+    button{font:inherit}.btn{border:0;border-radius:12px;padding:11px 13px;font-weight:650}.primary{background:var(--blue);color:#fff}.secondary{background:#e8e8ed}.danger{background:#ffe9e9;color:#9d1c1c}.success{background:#e7f6ec;color:#1d7d3d}.warn{background:#fff2d7;color:#a46600}
+    .list{display:flex;flex-direction:column;gap:8px}.item{background:#fff;border-radius:14px;padding:12px;border:1px solid #ececf0}.item strong{font-size:16px}.meta{font-size:13px;color:var(--muted);margin-top:4px}.badge{font-size:12px;padding:5px 8px;border-radius:999px;font-weight:700}.ok{background:#e7f6ec;color:#237a41}.missing{background:#fff0d6;color:#9a6400}.open{background:#eee;color:#555}
+    .typeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.typeBtn{padding:16px 7px;border:1px solid var(--line);background:#fff;border-radius:14px;font-weight:700}.typeBtn.active{outline:2px solid var(--blue);background:#f2f8ff}
+    .photoGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.photo{aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#eee;position:relative}.photo img{width:100%;height:100%;object-fit:cover}.photo button{position:absolute;right:4px;top:4px;border:0;border-radius:999px;background:rgba(0,0,0,.65);color:white;width:26px;height:26px}
+    .empty{color:var(--muted);text-align:center;padding:26px 8px}.floating{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:10}.fab{width:58px;height:58px;border-radius:50%;border:0;background:#111;color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+    .small{font-size:12px;color:var(--muted)} .hidden{display:none!important} hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+    @media(max-width:430px){.grid2,.grid3{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(4,1fr);font-size:12px}.photoGrid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+<header><h1>Aufmaß Stahlbau</h1><small>iPhone / iPad · lokal gespeichert</small></header>
+<main>
+  <div class="tabs">
+    <button class="tab active" data-view="projects">Projekte</button>
+    <button class="tab" data-view="parts">Bauteile</button>
+    <button class="tab" data-view="edit">Erfassen</button>
+    <button class="tab" data-view="export">Export</button>
+  </div>
+
+  <section id="projects" class="view active">
+    <div class="card">
+      <div class="grid2">
+        <div><label>Projektname</label><input id="projectName" placeholder="z. B. Halle Müller"></div>
+        <div><label>Ort</label><input id="projectPlace" placeholder="z. B. Bielefeld"></div>
+      </div>
+      <div style="margin-top:10px"><button class="btn primary" id="addProject">Projekt anlegen</button></div>
+    </div>
+    <div id="projectList" class="list"></div>
+  </section>
+
+  <section id="parts" class="view">
+    <div class="card row between">
+      <div><strong id="currentProjectLabel">Kein Projekt gewählt</strong><div class="small">Bauteile des aktuellen Projekts</div></div>
+      <button class="btn primary" id="newPartBtn">+ Bauteil</button>
+    </div>
+    <div id="partList" class="list"></div>
+  </section>
+
+  <section id="edit" class="view">
+    <div class="card">
+      <div class="typeGrid" id="typeGrid">
+        <button class="typeBtn active" data-type="Stütze">Stütze</button>
+        <button class="typeBtn" data-type="Riegel">Riegel</button>
+        <button class="typeBtn" data-type="Diagonale">Diagonale</button>
+        <button class="typeBtn" data-type="Blech">Blech</button>
+        <button class="typeBtn" data-type="Anschluss">Anschluss</button>
+        <button class="typeBtn" data-type="Sonstiges">Sonstiges</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="grid2">
+        <div><label>ID</label><input id="partId" placeholder="automatisch, z. B. S1"></div>
+        <div><label>Profil</label><input id="profile" placeholder="z. B. RHS 100×100×5"></div>
+        <div><label>Länge [m]</label><input id="length" inputmode="decimal" placeholder="3,25"></div>
+        <div><label>Höhe OK [m]</label><input id="height" inputmode="decimal" placeholder="+3,25"></div>
+        <div><label>Material</label><input id="material" placeholder="z. B. S355J2"></div>
+        <div><label>Fußplatte / Blech</label><input id="plate" placeholder="z. B. 250×250×15 mm"></div>
+        <div><label>Schrauben</label><input id="bolts" placeholder="z. B. 4× M16 8.8"></div>
+        <div><label>Status</label><select id="status"><option>Vollständig</option><option>Maß fehlt</option><option>Offen</option></select></div>
+      </div>
+      <div style="margin-top:10px"><label>Anschluss oben</label><input id="connTop" placeholder="z. B. K1"></div>
+      <div style="margin-top:10px"><label>Anschluss unten</label><input id="connBottom" placeholder="z. B. A1"></div>
+      <div style="margin-top:10px"><label>Notiz</label><textarea id="notes" placeholder="z. B. Oberfläche verzinkt, Schweißnaht umlaufend"></textarea></div>
+    </div>
+
+    <div class="card">
+      <div class="row between"><strong>Fotos</strong><label class="btn secondary" style="display:inline-block;cursor:pointer">Foto hinzufügen<input id="photoInput" class="hidden" type="file" accept="image/*" capture="environment" multiple></label></div>
+      <div id="photoGrid" class="photoGrid" style="margin-top:10px"></div>
+      <div class="small" style="margin-top:8px">Fotos werden im Browser gespeichert. Für sehr viele Fotos regelmäßig exportieren.</div>
+    </div>
+
+    <div class="row" style="margin-bottom:14px">
+      <button class="btn primary" id="savePart" style="flex:1">Bauteil speichern</button>
+      <button class="btn secondary" id="clearForm">Neu</button>
+    </div>
+  </section>
+
+  <section id="export" class="view">
+    <div class="card">
+      <strong>Export</strong><div class="small" style="margin-top:4px">CSV für Excel/Tekla-Vorbereitung + komplette Datensicherung als JSON.</div>
+      <div class="grid2" style="margin-top:12px">
+        <button class="btn primary" id="exportCsv">CSV exportieren</button>
+        <button class="btn secondary" id="exportJson">Backup JSON</button>
+      </div>
+      <hr>
+      <label>Backup wieder einlesen</label>
+      <input id="importJson" type="file" accept="application/json,.json">
+    </div>
+    <div class="card"><strong>Aktuelles Projekt</strong><div id="exportSummary" class="meta" style="margin-top:6px"></div></div>
+  </section>
+</main>
+<div class="floating"><button class="fab" id="fab">+</button></div>
+
+<script>
+const DBKEY='aufmass_stahlbau_v1';
+let db=JSON.parse(localStorage.getItem(DBKEY)||'{"projects":[],"currentProjectId":null}');
+let editingPartId=null, currentPhotos=[];
+const $=id=>document.getElementById(id);
+function saveDB(){localStorage.setItem(DBKEY,JSON.stringify(db));renderAll()}
+function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function currentProject(){return db.projects.find(p=>p.id===db.currentProjectId)||null}
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===id));}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>showView(t.dataset.view));
+
+function renderProjects(){const el=$('projectList');el.innerHTML='';if(!db.projects.length){el.innerHTML='<div class="empty">Noch kein Projekt.</div>';return}db.projects.forEach(p=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div class="row between"><div><strong>${esc(p.name)}</strong><div class="meta">${esc(p.place||'')} · ${p.parts.length} Bauteile</div></div><span class="badge ${p.id===db.currentProjectId?'ok':'open'}">${p.id===db.currentProjectId?'Aktiv':'Öffnen'}</span></div>`;d.onclick=()=>{db.currentProjectId=p.id;saveDB();showView('parts')};el.appendChild(d)})}
+function renderParts(){const p=currentProject();$('currentProjectLabel').textContent=p?p.name:'Kein Projekt gewählt';const el=$('partList');el.innerHTML='';if(!p){el.innerHTML='<div class="empty">Bitte zuerst ein Projekt wählen.</div>';return}if(!p.parts.length){el.innerHTML='<div class="empty">Noch keine Bauteile.</div>';return}p.parts.forEach(part=>{const d=document.createElement('div');d.className='item';const cls=part.status==='Vollständig'?'ok':part.status==='Maß fehlt'?'missing':'open';d.innerHTML=`<div class="row between"><div><strong>${esc(part.id)} · ${esc(part.type)}</strong><div class="meta">${esc(part.profile||'ohne Profil')}${part.length?' · L = '+esc(part.length)+' m':''}</div></div><span class="badge ${cls}">${esc(part.status)}</span></div>`;d.onclick=()=>loadPart(part);el.appendChild(d)})}
+function renderSummary(){const p=currentProject();$('exportSummary').textContent=p?`${p.name}: ${p.parts.length} Bauteile, ${p.parts.filter(x=>x.status==='Maß fehlt').length} mit fehlendem Maß.`:'Kein Projekt gewählt.'}
+function renderAll(){renderProjects();renderParts();renderSummary()}
+
+$('addProject').onclick=()=>{const name=$('projectName').value.trim();if(!name)return alert('Bitte Projektname eingeben.');const p={id:uid(),name,place:$('projectPlace').value.trim(),created:new Date().toISOString(),parts:[]};db.projects.push(p);db.currentProjectId=p.id;$('projectName').value='';$('projectPlace').value='';saveDB();showView('parts')}
+$('newPartBtn').onclick=()=>{if(!currentProject())return alert('Bitte zuerst Projekt wählen.');clearForm();showView('edit')};
+$('fab').onclick=()=>{if(!currentProject())showView('projects');else{clearForm();showView('edit')}};
+
+document.querySelectorAll('.typeBtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.typeBtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(!editingPartId)$('partId').value=nextId(b.dataset.type)});
+function nextId(type){const p=currentProject();if(!p)return'';const prefix={Stütze:'S',Riegel:'R',Diagonale:'D',Blech:'B',Anschluss:'K',Sonstiges:'X'}[type]||'X';let n=1;const used=new Set(p.parts.map(x=>x.id));while(used.has(prefix+n))n++;return prefix+n}
+function getType(){return document.querySelector('.typeBtn.active').dataset.type}
+function setType(type){document.querySelectorAll('.typeBtn').forEach(x=>x.classList.toggle('active',x.dataset.type===type))}
+function clearForm(){editingPartId=null;currentPhotos=[];setType('Stütze');['profile','length','height','material','plate','bolts','connTop','connBottom','notes'].forEach(id=>$(id).value='');$('status').value='Vollständig';$('partId').value=nextId('Stütze');renderPhotos()}
+function loadPart(part){editingPartId=part._id;currentPhotos=[...(part.photos||[])];setType(part.type);$('partId').value=part.id||'';$('profile').value=part.profile||'';$('length').value=part.length||'';$('height').value=part.height||'';$('material').value=part.material||'';$('plate').value=part.plate||'';$('bolts').value=part.bolts||'';$('connTop').value=part.connTop||'';$('connBottom').value=part.connBottom||'';$('notes').value=part.notes||'';$('status').value=part.status||'Vollständig';renderPhotos();showView('edit')}
+$('clearForm').onclick=clearForm;
+$('savePart').onclick=()=>{const p=currentProject();if(!p)return alert('Kein Projekt gewählt.');const data={_id:editingPartId||uid(),id:$('partId').value.trim()||nextId(getType()),type:getType(),profile:$('profile').value.trim(),length:$('length').value.trim(),height:$('height').value.trim(),material:$('material').value.trim(),plate:$('plate').value.trim(),bolts:$('bolts').value.trim(),connTop:$('connTop').value.trim(),connBottom:$('connBottom').value.trim(),notes:$('notes').value.trim(),status:$('status').value,photos:currentPhotos,updated:new Date().toISOString()};const i=p.parts.findIndex(x=>x._id===data._id);if(i>=0)p.parts[i]=data;else p.parts.push(data);saveDB();clearForm();showView('parts')}
+
+$('photoInput').addEventListener('change',async e=>{for(const f of [...e.target.files]){const data=await resizeImage(f,1200,.78);currentPhotos.push({id:uid(),name:f.name||'Foto',data});}e.target.value='';renderPhotos()});
+function renderPhotos(){const el=$('photoGrid');el.innerHTML='';currentPhotos.forEach(ph=>{const d=document.createElement('div');d.className='photo';d.innerHTML=`<img src="${ph.data}" alt="Foto"><button aria-label="Löschen">×</button>`;d.querySelector('button').onclick=()=>{currentPhotos=currentPhotos.filter(x=>x.id!==ph.id);renderPhotos()};el.appendChild(d)})}
+function resizeImage(file,max,q){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{let w=img.width,h=img.height;if(Math.max(w,h)>max){const s=max/Math.max(w,h);w*=s;h*=s}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);res(c.toDataURL('image/jpeg',q))};img.onerror=rej;img.src=r.result};r.onerror=rej;r.readAsDataURL(file)})}
+
+$('exportCsv').onclick=()=>{const p=currentProject();if(!p)return alert('Kein Projekt gewählt.');const cols=['ID','Typ','Profil','Länge [m]','Höhe OK [m]','Material','Fußplatte/Blech','Schrauben','Anschluss oben','Anschluss unten','Status','Notiz','Fotoanzahl'];const rows=p.parts.map(x=>[x.id,x.type,x.profile,x.length,x.height,x.material,x.plate,x.bolts,x.connTop,x.connBottom,x.status,x.notes,(x.photos||[]).length]);download(`${safeName(p.name)}_Bauteilliste.csv`,'\uFEFF'+[cols,...rows].map(r=>r.map(csv).join(';')).join('\n'),'text/csv;charset=utf-8')}
+$('exportJson').onclick=()=>download(`Aufmass_Backup_${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(db,null,2),'application/json');
+$('importJson').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const obj=JSON.parse(await f.text());if(!obj.projects)throw 0;db=obj;saveDB();alert('Backup importiert.')}catch{alert('Ungültige Backup-Datei.')}e.target.value=''};
+function csv(v){v=(v??'').toString().replaceAll('"','""');return `"${v}"`}
+function safeName(s){return s.replace(/[^a-z0-9äöüß_-]+/gi,'_')}
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function esc(s){return (s??'').toString().replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderAll();clearForm();
+</script>
+</body>
+</html>
